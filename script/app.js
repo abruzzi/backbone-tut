@@ -60,7 +60,7 @@
 
     var Contact = Backbone.Model.extend({
         defaults: {
-            photo: "/img/placeholder.png"
+            photo: "img/placeholder.png"
         }
     });
 
@@ -84,9 +84,13 @@
         initialize: function(){
             this.collection = new Directory(contacts);
             this.render();
+            this.$el.find("#filter").append(this.createSelect());
+            this.on("change:filterType", this.filterByType, this);
+            this.collection.on("reset", this.render, this);
         },
         render: function(){
             var that = this;
+            this.$el.find("article").remove();
             _.each(this.collection.models, function(item){
                 that.renderContact(item);   
             }, this);
@@ -96,6 +100,49 @@
                 model: item
             });
             this.$el.append(contactView.render().el);
+        },
+        getTypes: function(){
+            return _.uniq(this.collection.pluck("type"), false, function(type){
+                return type.toLowerCase();
+            });
+        },
+        createSelect: function(){
+            var select = $("<select/>", {
+                html: "<option>All</option>"
+            });
+
+            _.each(this.getTypes(), function(item){
+                var option = $("<option/>", {
+                    value: item.toLowerCase(),
+                    text: item.toLowerCase()
+                }).appendTo(select);
+            });
+
+            return select;
+        },
+
+        events: {
+            "change #filter select": "setFilter"
+        },
+
+        setFilter: function(event){
+            this.filterType = event.currentTarget.value;
+            this.trigger("change:filterType");
+        },
+
+        filterByType: function(){
+            console.info(this.filterType);
+            if (this.filterType === "all") {
+                this.collection.reset(contacts);
+            } else {
+                this.collection.reset(contacts, {silent: true});
+                var filterType = this.filterType;
+                var filtered = _.filter(this.collection.models, function(item){
+                    return item.get("type").toLowerCase() === filterType;
+                });
+                console.dir(filtered);
+                this.collection.reset(filtered);
+            }
         }
     });
 
