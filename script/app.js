@@ -132,8 +132,9 @@
 
         filterByType: function(){
             console.info(this.filterType);
-            if (this.filterType === "all") {
+            if (this.filterType.toLowerCase() === "all") {
                 this.collection.reset(contacts);
+                contactsRouter.navigate("filter/all");
             } else {
                 this.collection.reset(contacts, {silent: true});
                 var filterType = this.filterType;
@@ -142,9 +143,23 @@
                 });
                 console.dir(filtered);
                 this.collection.reset(filtered);
+                contactsRouter.navigate("filter/"+filterType);
             }
         }
     });
 
+    var ContactsRouter = Backbone.Router.extend({
+        routes: {
+            "filter/:type": "urlFilter"
+        },
+        urlFilter: function(type){
+            directory.filterType = type;
+            directory.trigger("change:filterType");
+        }
+    });
+
     var directory = new DirectoryView();
+    var contactsRouter = new ContactsRouter();
+
+    Backbone.history.start();
 } (jQuery));
